@@ -1,0 +1,37 @@
+RewriteEngine On
+
+# Redirigir todas las solicitudes que comiencen con /seller o /seller/
+RewriteCond %{REQUEST_URI} ^/vendedores
+RewriteRule ^vendedores/(.*)$ vendedores/index.php [QSA,L]
+
+# Redirigir todas las solicitudes que comiencen con /seller o /seller/
+RewriteCond %{REQUEST_URI} ^/seller
+RewriteRule ^seller/(.*)$ seller/index.php [QSA,L]
+
+# Redirigir todas las solicitudes que comiencen con /logout o /logout/
+RewriteCond %{REQUEST_URI} ^/logout/?$ [NC]
+RewriteRule ^logout/?$ logout/index.php [QSA,L]
+
+# Redirigir todas las solicitudes que comiencen con /check o /check/
+RewriteCond %{REQUEST_URI} ^/check/?$ [NC]
+RewriteRule ^check/?$ check/index.php [QSA,L]
+
+# Redirigir todas las solicitudes que comiencen con /auth o /auth/
+RewriteRule ^auth/?$ auth/index.php [QSA,L]
+
+# Redirigir todas las solicitudes que comiencen con /register o /register/
+RewriteCond %{REQUEST_URI} ^/register/?$ [NC]
+RewriteRule ^register/?$ register/index.php [QSA,L]
+
+# Redirigir las solicitudes que comiencen con /properties/ a properties/index.php
+RewriteCond %{REQUEST_URI} ^/properties
+RewriteRule ^properties/(.*)$ properties/index.php [QSA,L]
+
+# Redirigir las solicitudes que comiencen con /properties/ a properties/index.php
+RewriteCond %{REQUEST_URI} ^/api
+RewriteRule ^api/(.*)$ api/index.php [QSA,L]
+
+# Redirigir todas las demás solicitudes a back/index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [QSA,L]

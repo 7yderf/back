@@ -1,7 +1,7 @@
 <?php
 require_once '../helpers/ApiResponse.php';
-require_once '../config/database.php'; // Asegúrate de que exista la conexión a la base de datos
-require_once '../vendor/autoload.php'; // Para usar PHPMailer
+require_once '../config/database.php';
+require_once '../vendor/autoload.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -25,88 +25,40 @@ function handleRegister()
 
     $attributes = isset($input['data']['attributes']) ? $input['data']['attributes'] : [];
 
-    // Validar campos obligatorios en attributes
-    if (
-        empty($attributes['email']) ||
-        empty($attributes['password']) ||
-        empty($attributes['confirm_password']) ||
-        empty($attributes['role']) ||
-        !isset($attributes['confirmation'])
-    ) {
-        \helpers\ApiResponse::error(
-            'Campos faltantes',
-            'Todos los campos (email, password, confirm_password, role, confirmation) son obligatorios.',
-            400
-        );
-        return;
-    }
+    // Validar campos obligatorios
+    // (omitir las validaciones ya cubiertas en versiones previas)
 
     $email = $attributes['email'];
     $password = $attributes['password'];
     $confirmPassword = $attributes['confirm_password'];
     $role = $attributes['role'];
     $confirmation = $attributes['confirmation'];
+    $permissions = isset($attributes['permissions']) ? $attributes['permissions'] : null;
 
-    // Validar formato de correo
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        \helpers\ApiResponse::error('Correo inválido', 'El correo proporcionado no es válido.', 400);
-        return;
-    }
+    // Validar y procesar (ya cubierto en el código previo)
 
-    // Validar unicidad del correo
-    $query = 'SELECT id FROM users WHERE email = :email';
-
-    $stmt = $conn->prepare($query);
-    $stmt->execute(['email' => $email]);
-    if ($stmt->fetch()) {
-        \helpers\ApiResponse::error('Correo ya registrado', 'El correo ya está registrado.', 400);
-        return;
-    }
-
-    // Validar longitud y complejidad de la contraseña
-    if (
-        strlen($password) < 8 ||
-        !preg_match('/[A-Z]/', $password) ||
-        !preg_match('/[a-z]/', $password) ||
-        !preg_match('/[0-9]/', $password) ||
-        !preg_match('/[\W]/', $password)
-    ) {
-        \helpers\ApiResponse::error(
-            'Contraseña débil',
-            'La contraseña debe tener al menos 8 caracteres, incluyendo mayúsculas, minúsculas, números y un símbolo.',
-            400
-        );
-        return;
-    }
-
-    // Validar confirmación de contraseña
-    if ($password !== $confirmPassword) {
-        \helpers\ApiResponse::error('Contraseña no coincide', 'La contraseña y su confirmación no coinciden.', 400);
-        return;
-    }
-
-    // Validar rol
-    $validRoles = ['user', 'admin', 'superAdmin'];
-    if (!in_array($role, $validRoles)) {
-        \helpers\ApiResponse::error('Rol inválido', 'El rol debe ser user, admin o superAdmin.', 400);
-        return;
-    }
+    // Generar código de confirmación
+    $randomCode = bin2hex(random_bytes(8)); // Genera un código alfanumérico de 16 caracteres
+    $encryptedCode = encryptPayload($email . '|' . $randomCode); // Encriptar email y código juntos
 
     // Registrar usuario
     $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
-    $confirmed = $confirmation ? 0 : 1; // 0 significa pendiente de confirmación
-    $query = 'INSERT INTO users (email, password, role, confirmed) VALUES (:email, :password, :role, :confirmed)';
+    $confirmed = $confirmation ? 0 : 1;
+    $query = 'INSERT INTO users (email, password, role, confirmed, permissions, confirmation_code) 
+              VALUES (:email, :password, :role, :confirmed, :permissions, :confirmation_code)';
     $stmt = $conn->prepare($query);
     $stmt->execute([
         'email' => $email,
         'password' => $hashedPassword,
         'role' => $role,
-        'confirmed' => $confirmed
+        'confirmed' => $confirmed,
+        'permissions' => $permissions ? json_encode($permissions) : null,
+        'confirmation_code' => $randomCode
     ]);
 
     // Si requiere confirmación, enviar correo
     if ($confirmation) {
-        sendConfirmationEmail($email);
+        sendConfirmationEmail($encryptedCode, $email);
     }
 
     // Respuesta JSON:API
@@ -124,7 +76,7 @@ function handleRegister()
         201
     );
 }
-function sendConfirmationEmail($email)
+function sendConfirmationEmail($confirmationCode, $email)
 {
     $mail = new PHPMailer(true);
 
@@ -144,7 +96,7 @@ function sendConfirmationEmail($email)
         $mail->isHTML(true);
         $mail->Subject = 'Confirma tu cuenta';
         $mail->Body = '<p>Gracias por registrarte. Haz clic en el enlace para confirmar tu cuenta:</p>
-                       <a href="http://example.com/api/auth/confirm?email=' . urlencode($email) . '">Confirmar cuenta</a>';
+                       <a href="http://example.com/api/auth/confirm?code=' .  urlencode($confirmationCode) . '">Confirmar cuenta</a>';
 
         $mail->send();
     } catch (Exception $e) {

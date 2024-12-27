@@ -2,8 +2,10 @@
 require_once '../helpers/EnvLoader.php';
 require_once '../helpers/AuthMiddleware.php';
 require_once '../helpers/ApiResponse.php';
+require_once __DIR__ . '/../helpers/Encryption.php';
 require_once 'auth.php';
 require_once 'register.php';
+require_once 'confirmEmail.php';
 
 
 header('Content-Type: application/json');
@@ -39,6 +41,18 @@ switch ($uri) {
     case '/api/auth/register':
         if ($method === 'POST') {
             handleRegister();
+        } else {
+            \helpers\ApiResponse::error(
+                'Método no permitido',
+                'Solo se permite el método POST en esta ruta',
+                405
+            );
+        }
+        break;
+
+    case '/api/auth/confirm-email':
+        if ($method === 'POST') {
+            handleConfirmEmail();
         } else {
             \helpers\ApiResponse::error(
                 'Método no permitido',

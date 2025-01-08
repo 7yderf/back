@@ -5,7 +5,11 @@ require_once '../helpers/ApiResponse.php';
 require_once __DIR__ . '/../helpers/Encryption.php';
 require_once 'auth.php';
 require_once 'register.php';
+require_once 'logout.php';
+require_once 'disableUser.php';
 require_once 'confirmEmail.php';
+require_once 'forgotPassword.php';
+require_once 'resetPassword.php';
 
 
 header('Content-Type: application/json');
@@ -62,10 +66,72 @@ switch ($uri) {
         }
         break;
 
+    case '/api/auth/logout':
+        if ($method === 'POST') {
+            handleLogout();
+        } else {
+            \helpers\ApiResponse::error(
+                'Método no permitido',
+                'Solo se permite el método POST en esta ruta',
+                405
+            );
+        }
+        break;
+
+    case '/api/auth/forgot-password':
+        if ($method === 'POST') {
+            handleForgotPassword();
+        } else {
+            \helpers\ApiResponse::error(
+                'Método no permitido',
+                'Solo se permite el método POST en esta ruta',
+                405
+            );
+        }
+        break;
+
+    case '/api/auth/reset-password':
+        if ($method === 'POST') {
+            handleResetPassword();
+        } else {
+            \helpers\ApiResponse::error(
+                'Método no permitido',
+                'Solo se permite el método POST en esta ruta',
+                405
+            );
+        }
+        break;
+
+    case '/api/admin/disable-user':
+        if ($method === 'POST') {
+            // Asume que `authenticate` devuelve el usuario autenticado
+            $user = authenticate();
+
+            if ($user){
+                handleDisableUser($user);
+            } else {
+                \helpers\ApiResponse::error(
+                    'Acceso denegado',
+                    'Token no válido o expirado',
+                    401
+                );
+            }
+
+        } else {
+            \helpers\ApiResponse::error(
+                'Método no permitido',
+                'Solo se permite el método POST en esta ruta',
+                405
+            );
+        }
+        break;
+
     case '/api/protected':
         if ($method === 'GET') {
-            try {
-                $user = authenticate(); // Middleware para validar el token
+
+            $user = authenticate(); // Middleware para validar el token
+
+            if ($user){
                 \helpers\ApiResponse::success(
                     [
                         'type' => 'protected',
@@ -77,13 +143,14 @@ switch ($uri) {
                     ],
                     'Acceso a la ruta protegida'
                 );
-            } catch (Exception $e) {
+            } else {
                 \helpers\ApiResponse::error(
                     'Acceso denegado',
                     'Token no válido o expirado',
                     401
                 );
             }
+
         } else {
             \helpers\ApiResponse::error(
                 'Método no permitido',

@@ -20,7 +20,7 @@ function handleLogin() {
     $email = $input['data']['attributes']['email'];
     $password = $input['data']['attributes']['password'];
 
-    $query = 'SELECT id, email, password, role, permissions, confirmed FROM users WHERE email = :email LIMIT 1';
+    $query = 'SELECT id, email, password, role, permissions, confirmed, disabled, token_version  FROM users WHERE email = :email LIMIT 1';
     $stmt = $conn->prepare($query);
     $stmt->bindParam(':email', $email);
 
@@ -33,6 +33,16 @@ function handleLogin() {
                 \helpers\ApiResponse::error(
                     'Cuenta no confirmada',
                     'Debes confirmar tu correo electrónico antes de iniciar sesión.',
+                    403
+                );
+                return;
+            }
+
+            // Verificar si el usuario está deshabilitado
+            if ($user['disabled'] == 1) {
+                \helpers\ApiResponse::error(
+                    'Cuenta deshabilitada',
+                    'Tu cuenta ha sido deshabilitada. Contacta al administrador.',
                     403
                 );
                 return;
@@ -87,6 +97,7 @@ function handleLogin() {
                     'exp' => time() + $config['expiration'],
                     'userId' => $user['id'],
                     'email' => $user['email'],
+                    'token_version' => $user['token_version'], // Versión del token
                     'permissions' => $encryptedPermissions // Enviar el array encriptado
                 ];
 

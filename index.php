@@ -41,12 +41,6 @@ switch ($method) {
     case 'POST':
         handlePOST($request);
         break;
-    case 'DELETE':
-        handleDELETE($request);
-        break;
-    case 'UPDATE':
-        handleUPDATE($request);
-        break;
     default:
         // Método no permitido
         http_response_code(405);
@@ -54,11 +48,11 @@ switch ($method) {
 }
 
 // Función para manejar solicitudes GET
-function handleGET($request)
+function handleGET($request): string
 {
    $request = str_replace('/back/', '', $request);
     
-   echo getPropertiesList($request);
+   return 'Hello World';
 }
 
 // Función para manejar solicitudes POST
@@ -101,50 +95,3 @@ function handlePOST($request)
     }
 }
 
-// Función para manejar solicitudes DELETE
-function handleDELETE($request)
-{
-    // Lógica para manejar solicitudes DELETE
-    // Por ejemplo, eliminar datos de la base de datos según el ID proporcionado en la URL
-}
-
-// Función para manejar solicitudes UPDATE
-function handleUPDATE($request)
-{
-    // Lógica para manejar solicitudes UPDATE
-    // Por ejemplo, actualizar datos en la base de datos según el ID proporcionado en la URL
-}
-
-function getPropertiesList($request)
-{
-    
-    // Crear una nueva instancia de Client
-    $client = new Client();
-
-    // Realizar una solicitud GET a la URL de EasyBroker con el ID de la propiedad
-    try {
-        $response = $client->request('GET', 'http://api.easybroker.com/v1/properties/' . $request, [
-            'headers' => [
-                'X-Authorization' => 'imeu6ge5fnjirrp0liiuvn7tf1b7f7',
-                'Accept' => 'application/json',
-            ],
-        ]);
-
-        // Obtener el código de estado de la respuesta
-        $statusCode = $response->getStatusCode();
-
-        // Mostrar el cuerpo de la respuesta si la solicitud fue exitosa
-        if ($statusCode === 200) {
-            $res['data'] = json_decode($response->getBody()->getContents(), true);
-            $res['status'] = $statusCode;
-            return json_encode($res, JSON_PRETTY_PRINT);
-        } else {
-            // Devolver un mensaje de error
-            return json_encode(['error' => 'Error al obtener los datos [1]'], JSON_PRETTY_PRINT);
-        }
-    } catch (Exception $e) {
-        return json_encode(['error' => 'Error al obtener los datos [2]'], JSON_PRETTY_PRINT);
-    }
-
-
-}

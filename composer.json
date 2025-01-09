@@ -2,7 +2,10 @@
     "name": "fredy/back",
     "autoload": {
         "psr-4": {
-            "Fredy\\Back\\": "src/"
+            "Fredy\\Back\\": "src/",
+            "helpers\\": "helpers/",
+            "controllers\\": "controllers/",
+            "config\\": "config/"
         }
     },
     "authors": [

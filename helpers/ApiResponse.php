@@ -1,26 +1,27 @@
 <?php
+
 namespace helpers;
 
-class ApiResponse {
+class ApiResponse
+{
     /**
-     * Respuesta exitosa.
+     * Respuesta exitosa bajo JSON:API.
      *
-     * @param array|object $data Datos principales de la respuesta.
-     * @param string $message Mensaje adicional para la meta.
+     * @param array|object|null $data Datos principales de la respuesta.
+     * @param string|null $message Mensaje para el meta.
      * @param int $statusCode Código HTTP, por defecto 200.
-     * @param string|null $type Tipo de recurso (opcional).
+     * @param string|null $type Tipo del recurso.
      */
-    public static function success($data, $message = '', $statusCode = 200, $type = null) {
+    public static function success($data, $message = '', $statusCode = 200, $type = null)
+    {
         http_response_code($statusCode);
 
         $response = [
-            'data' => is_array($data) && isset($data['id']) && $type
-                ? [
-                    'type' => $type,
-                    'id' => $data['id'],
-                    'attributes' => $data
-                ]
-                : $data,
+            'data' => $data ? [
+                'type' => $type ?? 'resource',
+                'id' => $data['id'] ?? null,
+                'attributes' => $data
+            ] : null,
             'meta' => [
                 'message' => $message
             ]
@@ -30,19 +31,20 @@ class ApiResponse {
     }
 
     /**
-     * Respuesta de error.
+     * Respuesta de error bajo JSON:API.
      *
-     * @param string $title Título corto del error.
-     * @param string|null $detail Detalle específico del error.
+     * @param string $title Título del error.
+     * @param string|null $detail Detalle del error.
      * @param int $statusCode Código HTTP, por defecto 400.
      */
-    public static function error($title, $detail = null, $statusCode = 400) {
+    public static function error($title, $detail = null, $statusCode = 400)
+    {
         http_response_code($statusCode);
 
         $response = [
             'errors' => [
                 [
-                    'status' => (string)$statusCode,
+                    'status' => (string) $statusCode,
                     'title' => $title,
                     'detail' => $detail
                 ]
